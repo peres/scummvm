@@ -29,14 +29,70 @@
 #include "audio/mixer.h"
 #include "audio/mididrv.h"
 #include "audio/midiparser.h"
+#include "audio/softsynth/emumidi.h"
 
 #include "parallaction/sound.h"
 
 
 namespace Parallaction {
 
-MidiDriver *createAdlibMidiDriver(Audio::Mixer *mixer) {
+class AdlibMidiDriver : public MidiDriver_Emulated {
+
+public:
+	AdlibMidiDriver(Audio::Mixer *mixer);
+	virtual ~AdlibMidiDriver() { }
+
+	virtual int open();
+	virtual void close();
+	virtual void send(uint32 b);
+	virtual MidiChannel* allocateChannel();
+	virtual MidiChannel* getPercussionChannel();
+	virtual bool isStereo() const;
+	virtual int getRate() const;
+	virtual void generateSamples(int16* data, int len);
+};
+
+AdlibMidiDriver::AdlibMidiDriver(Audio::Mixer *mixer) : MidiDriver_Emulated(mixer) {
+
+}
+
+int AdlibMidiDriver::open() {
+	return MidiDriver_Emulated::open();
+}
+
+void AdlibMidiDriver::close() {
+
+}
+
+void AdlibMidiDriver::send(uint32 b) {
+
+}
+
+MidiChannel* AdlibMidiDriver::allocateChannel() {
 	return 0;
+}
+
+MidiChannel* AdlibMidiDriver::getPercussionChannel() {
+	return 0;
+}
+
+bool AdlibMidiDriver::isStereo() const {
+	return false;
+}
+
+int AdlibMidiDriver::getRate() const {
+	return _mixer->getOutputRate();
+}
+
+void AdlibMidiDriver::generateSamples(int16* data, int len) {
+	memset(data, 0, len);
+}
+
+
+
+
+MidiDriver *createAdlibMidiDriver(Audio::Mixer *mixer) {
+	return new AdlibMidiDriver(mixer);
 }
 
 } // namespace Parallaction
