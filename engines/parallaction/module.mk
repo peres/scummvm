@@ -29,6 +29,7 @@ MODULE_OBJS := \
 	parser_br.o \
 	parser_ns.o \
 	saveload.o \
+	sound_adlib_br.o \
 	sound_ns.o \
 	sound_br.o \
 	staticres.o \

@@ -39,6 +39,7 @@
 
 namespace Parallaction {
 
+MidiDriver *createAdlibMidiDriver(Audio::Mixer *mixer);
 
 /*
  * List of calls to the original music driver.
@@ -394,7 +395,15 @@ void MidiPlayer_MSC::timerCallback(void *p) {
 
 DosSoundMan_br::DosSoundMan_br(Parallaction_br *vm) : SoundMan_br(vm) {
 	MidiDriver::DeviceHandle dev = MidiDriver::detectDevice(MDT_MIDI | MDT_ADLIB | MDT_PREFER_GM);
-	MidiDriver *driver = MidiDriver::createMidi(dev);
+
+	MidiDriver *driver = 0;
+	if (MidiDriver::getMusicType(dev) == MT_ADLIB) {
+		driver = createAdlibMidiDriver(_vm->_mixer);
+	} else {
+		driver = MidiDriver::createMidi(dev);
+	}
+	assert(driver);
+	
 	_midiPlayer = new MidiPlayer_MSC(driver);
 	assert(_midiPlayer);
 }
