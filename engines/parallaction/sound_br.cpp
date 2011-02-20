@@ -392,7 +392,9 @@ void MidiPlayer_MSC::timerCallback(void *p) {
 	player->updateTimer();
 }
 
-DosSoundMan_br::DosSoundMan_br(Parallaction_br *vm, MidiDriver *driver) : SoundMan_br(vm) {
+DosSoundMan_br::DosSoundMan_br(Parallaction_br *vm) : SoundMan_br(vm) {
+	MidiDriver::DeviceHandle dev = MidiDriver::detectDevice(MDT_MIDI | MDT_ADLIB | MDT_PREFER_GM);
+	MidiDriver *driver = MidiDriver::createMidi(dev);
 	_midiPlayer = new MidiPlayer_MSC(driver);
 	assert(_midiPlayer);
 }
