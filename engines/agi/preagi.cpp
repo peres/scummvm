@@ -42,8 +42,7 @@ namespace Agi {
 PreAgiEngine::PreAgiEngine(OSystem *syst, const AGIGameDescription *gameDesc) : AgiBase(syst, gameDesc) {
 
 	// Setup mixer
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, ConfMan.getInt("sfx_volume"));
-	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, ConfMan.getInt("music_volume"));
+	syncSoundSettings();
 
 	_rnd = new Common::RandomSource();
 
@@ -121,9 +120,6 @@ void PreAgiEngine::initialize() {
 	_speakerStream = new Audio::PCSpeaker(_mixer->getOutputRate());
 	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_speakerHandle,
 							_speakerStream, -1, Audio::Mixer::kMaxChannelVolume, 0, DisposeAfterUse::NO, true);
-
-
-	//_timer->installTimerProc(agiTimerFunctionLow, 10 * 1000, NULL);
 
 	debugC(2, kDebugLevelMain, "Detect game");
 

@@ -229,16 +229,16 @@ void rotatePalette(byte *palette, int size) {
 	// Rotate the colors starting from address palette "size" times
 
 	// take a temporary palette color
-	byte tColor[4] = {0};
+	byte tColor[3] = {0};
 	// save first color in it.
-	memcpy(tColor, &palette[0], 4 * sizeof(byte));
+	memcpy(tColor, &palette[0], 3 * sizeof(byte));
 
 	// Move each color upward by 1
 	for (int i = 0; i < size - 1; i++) {
-		memcpy(&palette[i * 4], &palette[(i + 1) * 4], 4 * sizeof(byte));
+		memcpy(&palette[i * 3], &palette[(i + 1) * 3], 3 * sizeof(byte));
 	}
 	// Assign last color to tcolor
-	memcpy(&palette[(size - 1) * 4], tColor, 4 * sizeof(byte));
+	memcpy(&palette[(size - 1) * 3], tColor, 3 * sizeof(byte));
 }
 
 /**
@@ -360,7 +360,7 @@ void GFXtests::drawEllipse(int cx, int cy, int a, int b) {
 
 	// Illuminate the points lying on ellipse
 
-	for (theta = 0; theta <= PI / 2; theta += PI / 360) {
+	for (theta = 0; theta <= M_PI / 2; theta += M_PI / 360) {
 		x = (int)(b * sin(theta) + 0.5);
 		y = (int)(a * cos(theta) + 0.5);
 

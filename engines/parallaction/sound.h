@@ -140,7 +140,7 @@ class DosSoundMan_ns : public SoundMan_ns {
 
 	
 public:
-	DosSoundMan_ns(Parallaction_ns *vm, MidiDriver *midiDriver);
+	DosSoundMan_ns(Parallaction_ns *vm);
 	~DosSoundMan_ns();
 	void playMusic();
 	void stopMusic();

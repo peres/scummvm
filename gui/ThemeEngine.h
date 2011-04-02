@@ -32,7 +32,7 @@
 #include "graphics/surface.h"
 #include "graphics/font.h"
 
-#define SCUMMVM_THEME_VERSION_STR "SCUMMVM_STX0.8.2"
+#define SCUMMVM_THEME_VERSION_STR "SCUMMVM_STX0.8.3"
 
 namespace Graphics {
 	struct DrawStep;
@@ -280,7 +280,7 @@ public:
 	 *	It processes all the drawing queues and then copies dirty rects
 	 *	in the current Screen surface to the overlay.
 	 */
-	void updateScreen();
+	void updateScreen(bool render = true);
 
 
 	/** @name FONT MANAGEMENT METHODS */

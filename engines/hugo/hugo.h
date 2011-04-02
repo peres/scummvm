@@ -29,14 +29,14 @@
 #include "engines/engine.h"
 #include "common/file.h"
 #include "hugo/console.h"
-#include "hugo/menu.h"
+#include "hugo/dialogs.h"
 
 // This include is here temporarily while the engine is being refactored.
 #include "hugo/game.h"
 #include "hugo/file.h"
 
 #define HUGO_DAT_VER_MAJ 0                          // 1 byte
-#define HUGO_DAT_VER_MIN 41                         // 1 byte
+#define HUGO_DAT_VER_MIN 42                         // 1 byte
 #define DATAALIGNMENT    4
 
 namespace Common {
@@ -58,7 +58,7 @@ class RandomSource;
  */
 namespace Hugo {
 
-static const int kSavegameVersion = 3;
+static const int kSavegameVersion = 6;
 static const int kInvDx = 32;                       // Width of an inventory icon
 static const int kInvDy = 32;                       // Height of inventory icon
 static const int kMaxTunes = 16;                    // Max number of tunes
@@ -125,10 +125,11 @@ enum HugoDebugChannels {
 	kDebugMusic     = 1 <<  9
 };
 
-/**
- * Ways to dismiss a text/prompt box
- */
-enum box_t {kBoxAny, kBoxOk, kBoxPrompt, kBoxYesNo};
+enum HugoRegistered {
+	kRegShareware = 0,
+	kRegRegistered,
+	kRegFreeware
+};
 
 /**
  * Inventory icon bar states
@@ -242,7 +243,6 @@ public:
 	object_t *_hero;
 	byte  *_screen_p;
 	byte  _heroImage;
-
 	byte  *_screenStates;
 	command_t _line;                                // Line of user text input
 	config_t  _config;                              // User's config

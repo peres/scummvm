@@ -67,7 +67,7 @@ const char *getSciVersionDesc(SciVersion version) {
 		return "Late SCI0";
 	case SCI_VERSION_01:
 		return "SCI01";
-	case SCI_VERSION_1_EGA:
+	case SCI_VERSION_1_EGA_ONLY:
 		return "SCI1 EGA";
 	case SCI_VERSION_1_EARLY:
 		return "Early SCI1";
@@ -428,10 +428,8 @@ void MacResourceForkResourceSource::loadResource(ResourceManager *resMan, Resour
 			stream = _macResMan->getResource(tagArray[i], res->getNumber());
 	}
 
-	if (!stream)
-		error("Could not get Mac resource fork resource: %s", res->_id.toString().c_str());
-
-	decompressResource(stream, res);
+	if (stream)
+		decompressResource(stream, res);
 }
 
 bool MacResourceForkResourceSource::isCompressableResource(ResourceType type) const {
@@ -950,14 +948,17 @@ void ResourceManager::init(bool initFromFallbackDetector) {
 	case kViewEga:
 		debugC(1, kDebugLevelResMan, "resMan: Detected EGA graphic resources");
 		break;
+	case kViewAmiga:
+		debugC(1, kDebugLevelResMan, "resMan: Detected Amiga ECS graphic resources");
+		break;
+	case kViewAmiga64:
+		debugC(1, kDebugLevelResMan, "resMan: Detected Amiga AGA graphic resources");
+		break;
 	case kViewVga:
 		debugC(1, kDebugLevelResMan, "resMan: Detected VGA graphic resources");
 		break;
 	case kViewVga11:
 		debugC(1, kDebugLevelResMan, "resMan: Detected SCI1.1 VGA graphic resources");
-		break;
-	case kViewAmiga:
-		debugC(1, kDebugLevelResMan, "resMan: Detected Amiga graphic resources");
 		break;
 	default:
 #ifdef ENABLE_SCI32
@@ -1537,10 +1538,18 @@ void ResourceManager::readResourcePatches() {
 		mask += s_resourceTypeSuffixes[i];
 		SearchMan.listMatchingMembers(files, mask);
 
-		if (i == kResourceTypeScript && files.size() == 0) {
-			// SCI3 (we can't use getSciVersion() at this point)
-			mask = "*.csc";
-			SearchMan.listMatchingMembers(files, mask);
+		if (i == kResourceTypeView) {
+			SearchMan.listMatchingMembers(files, "*.v16");	// EGA SCI1 view patches
+			SearchMan.listMatchingMembers(files, "*.v32");	// Amiga SCI1 view patches
+			SearchMan.listMatchingMembers(files, "*.v64");	// Amiga AGA SCI1 (i.e. Longbow) view patches
+		} else if (i == kResourceTypePic) {
+			SearchMan.listMatchingMembers(files, "*.p16");	// EGA SCI1 picture patches
+			SearchMan.listMatchingMembers(files, "*.p32");	// Amiga SCI1 picture patches
+			SearchMan.listMatchingMembers(files, "*.p64");	// Amiga AGA SCI1 (i.e. Longbow) picture patches
+		} else if (i == kResourceTypeScript) {
+			if (files.size() == 0)
+				// SCI3 (we can't use getSciVersion() at this point)
+				SearchMan.listMatchingMembers(files, "*.csc");
 		}
 
 		for (Common::ArchiveMemberList::const_iterator x = files.begin(); x != files.end(); ++x) {
@@ -2051,7 +2060,13 @@ ViewType ResourceManager::detectViewType() {
 
 			switch (res->data[1]) {
 			case 128:
-				// If the 2nd byte is 128, it's a VGA game
+				// If the 2nd byte is 128, it's a VGA game.
+				// However, Longbow Amiga (AGA, 64 colors), also sets this byte
+				// to 128, but it's a mixed VGA/Amiga format. Detect this from
+				// the platform here.
+				if (g_sci && g_sci->getPlatform() == Common::kPlatformAmiga)
+					return kViewAmiga64;
+
 				return kViewVga;
 			case 0:
 				// EGA or Amiga, try to read as Amiga view
@@ -2129,9 +2144,9 @@ void ResourceManager::detectSciVersion() {
 
 	if (viewCompression != kCompLZW) {
 		// If it's a different compression type from kCompLZW, the game is probably
-		// SCI_VERSION_1_EGA or later. If the views are uncompressed, it is
+		// SCI_VERSION_1_EGA_ONLY or later. If the views are uncompressed, it is
 		// likely not an early disk game.
-		s_sciVersion = SCI_VERSION_1_EGA;
+		s_sciVersion = SCI_VERSION_1_EGA_ONLY;
 		oldDecompressors = false;
 	}
 
@@ -2245,9 +2260,9 @@ void ResourceManager::detectSciVersion() {
 			return;
 		}
 
-		// New decompressors. It's either SCI_VERSION_1_EGA or SCI_VERSION_1_EARLY.
+		// New decompressors. It's either SCI_VERSION_1_EGA_ONLY or SCI_VERSION_1_EARLY.
 		if (hasSci1Voc900()) {
-			s_sciVersion = SCI_VERSION_1_EGA;
+			s_sciVersion = SCI_VERSION_1_EGA_ONLY;
 			return;
 		}
 
@@ -2257,6 +2272,12 @@ void ResourceManager::detectSciVersion() {
 	case kResVersionSci1Middle:
 	case kResVersionKQ5FMT:
 		s_sciVersion = SCI_VERSION_1_MIDDLE;
+		// Amiga SCI1 middle games are actually SCI1 late
+		if (_viewType == kViewAmiga || _viewType == kViewAmiga64)
+			s_sciVersion = SCI_VERSION_1_LATE;
+		// Same goes for Mac SCI1 middle games
+		if (g_sci && g_sci->getPlatform() == Common::kPlatformMacintosh)
+			s_sciVersion = SCI_VERSION_1_LATE;
 		return;
 	case kResVersionSci1Late:
 		if (_volVersion == kResVersionSci11) {

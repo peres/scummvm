@@ -284,9 +284,9 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	_16BitPalette = NULL;
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	_townsScreen = 0;
-#endif
 	_cjkFont = 0;
 	_cjkChar = 0;
+#endif
 	_shadowPalette = NULL;
 	_shadowPaletteSize = 0;
 	memset(_currentPalette, 0, sizeof(_currentPalette));
@@ -637,8 +637,8 @@ ScummEngine::~ScummEngine() {
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	delete _townsScreen;
-#endif
 	delete _cjkFont;
+#endif
 
 	delete _debugger;
 
@@ -1858,27 +1858,25 @@ void ScummEngine::setupMusic(int midi) {
 			if (ConfMan.hasKey("tempo"))
 				_imuse->property(IMuse::PROP_TEMPO_BASE, ConfMan.getInt("tempo"));
 			// YM2162 driver can't handle midi->getPercussionChannel(), NULL shouldn't init MT-32/GM/GS
-			if (/*(midi != MDT_TOWNS) && (*/midi != MDT_NONE/*)*/) {
+			if (midi != MDT_NONE) {
 				_imuse->property(IMuse::PROP_NATIVE_MT32, _native_mt32);
 				if (MidiDriver::getMusicType(dev) != MT_MT32) // MT-32 Emulation shouldn't be GM/GS initialized
 					_imuse->property(IMuse::PROP_GS, _enable_gs);
 			}
-			if (_game.heversion >= 60 /*|| midi == MDT_TOWNS*/) {
+			if (_game.heversion >= 60) {
 				_imuse->property(IMuse::PROP_LIMIT_PLAYERS, 1);
 				_imuse->property(IMuse::PROP_RECYCLE_PLAYERS, 1);
 			}
-			/*if (midi == MDT_TOWNS)
-				_imuse->property(IMuse::PROP_DIRECT_PASSTHROUGH, 1);*/
 		}
 	}
 }
 
 void ScummEngine::syncSoundSettings() {
+	Engine::syncSoundSettings();
 
 	// Sync the engine with the config manager
 	int soundVolumeMusic = ConfMan.getInt("music_volume");
 	int soundVolumeSfx = ConfMan.getInt("sfx_volume");
-	int soundVolumeSpeech = ConfMan.getInt("speech_volume");
 
 	bool mute = false;
 
@@ -1886,7 +1884,7 @@ void ScummEngine::syncSoundSettings() {
 		mute = ConfMan.getBool("mute");
 
 		if (mute)
-			soundVolumeMusic = soundVolumeSfx = soundVolumeSpeech = 0;
+			soundVolumeMusic = soundVolumeSfx = 0;
 	}
 
 	if (_musicEngine) {
@@ -1896,10 +1894,6 @@ void ScummEngine::syncSoundSettings() {
 	if (_townsPlayer) {
 		_townsPlayer->setSfxVolume(soundVolumeSfx);
 	}
-
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, soundVolumeSfx);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, soundVolumeMusic);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, soundVolumeSpeech);
 
 	if (ConfMan.getBool("speech_mute"))
 		_voiceMode = 2;

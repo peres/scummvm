@@ -95,7 +95,10 @@ add_engine lastexpress "The Last Express" no
 add_engine lure "Lure of the Temptress" yes
 add_engine m4 "M4/MADS" no
 add_engine made "MADE" yes
-add_engine mohawk "Mohawk" no
+add_engine mohawk "Mohawk" yes "cstime myst riven"
+add_engine cstime "Where in Time is Carmen Sandiego?" no
+add_engine riven "Riven: The Sequel to Myst" no
+add_engine myst "Myst" no
 add_engine parallaction "Parallaction" yes
 add_engine queen "Flight of the Amazon Queen" yes
 add_engine saga "SAGA" yes "ihnm saga2"
@@ -976,7 +979,7 @@ get_system_exe_extension $guessed_host
 NATIVEEXEEXT=$_exeext
 
 case $_host in
-android)
+android | android-v7a)
 	_host_os=android
 	_host_cpu=arm
 	_host_alias=arm-linux-androideabi
@@ -1497,20 +1500,37 @@ echo $_host_os
 case $_host_os in
 	amigaos*)
 		CXXFLAGS="$CXXFLAGS -mcrt=newlib -mstrict-align -mcpu=750 -mtune=7400"
-		LDFLAGS="$LDFLAGS -mcrt=newlib -use-dynld -LSDK:Local/newib/lib"
+		LDFLAGS="$LDFLAGS -mcrt=newlib -use-dynld -L/sdk/local/newlib/lib"
 		# We have to use 'long' for our 4 byte typedef because AmigaOS already typedefs (u)int32
 		# as (unsigned) long, and consequently we'd get a compiler error otherwise.
 		type_4_byte='long'
 		add_line_to_config_mk 'AMIGAOS = 1'
 		;;
 	android)
+		case $_host in
+			android)
+				CXXFLAGS="$CXXFLAGS -march=armv5te -mtune=xscale -msoft-float"
+				;;
+			android-v7a)
+				CXXFLAGS="$CXXFLAGS -march=armv7-a -mfloat-abi=softfp -mfpu=vfp"
+				LDFLAGS="$LDFLAGS -Wl,--fix-cortex-a8"
+				;;
+		esac
 		CXXFLAGS="$CXXFLAGS --sysroot=$ANDROID_NDK/platforms/android-4/arch-arm"
-		CXXFLAGS="$CXXFLAGS -Os -mandroid -msoft-float -mthumb-interwork"
-		CXXFLAGS="$CXXFLAGS -march=armv5te -mtune=xscale"
+		CXXFLAGS="$CXXFLAGS -fpic -ffunction-sections -funwind-tables"
+		if test "$_debug_build" = yes; then
+			CXXFLAGS="$CXXFLAGS -fno-omit-frame-pointer -fno-strict-aliasing"
+		else
+			CXXFLAGS="$CXXFLAGS -fomit-frame-pointer -fstrict-aliasing"
+		fi
+		CXXFLAGS="$CXXFLAGS -finline-limit=300"
+		CXXFLAGS="$CXXFLAGS -Os -mthumb-interwork"
+		CXXFLAGS="$CXXFLAGS -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__"
+		CXXFLAGS="$CXXFLAGS -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__"
 		# supress 'mangling of 'va_list' has changed in GCC 4.4'
 		CXXFLAGS="$CXXFLAGS -Wno-psabi"
 		LDFLAGS="$LDFLAGS --sysroot=$ANDROID_NDK/platforms/android-4/arch-arm"
-		LDFLAGS="$LDFLAGS -mandroid -mthumb-interwork"
+		LDFLAGS="$LDFLAGS -mthumb-interwork"
 		add_line_to_config_mk "ANDROID_SDK = $ANDROID_SDK"
 		_unix=yes
 		_seq_midi=no
@@ -1550,9 +1570,11 @@ case $_host_os in
 		CXXFLAGS="$CXXFLAGS -fuse-cxa-atexit"
 		LDFLAGS="$LDFLAGS -specs=ds_arm9.specs -mthumb-interwork -mno-fpu -Wl,-Map,map.txt"
 		if test "$_dynamic_modules" = no ; then
-  			LDFLAGS="$LDFLAGS -Wl,--gc-sections"
- 		else
-		        LDFLAGS="$LDFLAGS -Wl,--retain-symbols-file,ds.syms"
+			LDFLAGS="$LDFLAGS -Wl,--gc-sections"
+		else
+				LDFLAGS="$LDFLAGS -Wl,--no-gc-sections"
+				# TODO automate this required 2 step linking phase
+				# LDFLAGS="$LDFLAGS -Wl,--retain-symbols-file,ds.syms"
 		fi
 		LDFLAGS="$LDFLAGS -L$DEVKITPRO/libnds/lib"
 		LIBS="$LIBS -lnds9"
@@ -1578,7 +1600,6 @@ case $_host_os in
 		DEFINES="$DEFINES -DSYSTEM_NOT_SUPPORTING_D_TYPE"
 		# Needs -lnetwork for the timidity MIDI driver
 		LIBS="$LIBS -lnetwork"
-		CXXFLAGS="$CXXFLAGS -fhuge-objects"
 		_unix=yes
 		_seq_midi=no
 		;;
@@ -1643,7 +1664,7 @@ case $_host_os in
 		fi
 		;;
 	wince)
-		CXXFLAGS="$CXXFLAGS -O3 -march=armv4 -mtune=xscale"
+		CXXFLAGS="$CXXFLAGS -O3 -fno-inline-functions -march=armv4 -mtune=xscale"
 		DEFINES="$DEFINES -D_WIN32_WCE=300 -D__ARM__ -D_ARM_ -DUNICODE -DFPM_DEFAULT -DNONSTANDARD_PORT"
 		DEFINES="$DEFINES -DWIN32 -Dcdecl= -D__cdecl__="
 		;;
@@ -1658,7 +1679,7 @@ if test -n "$_host"; then
 	# Cross-compiling mode - add your target here if needed
 	echo "Cross-compiling to $_host"
 	case "$_host" in
-		android)
+		android | android-v7a)
 			_unix=yes
 			_need_memalign=yes
 			# we link a .so as default
@@ -2094,7 +2115,7 @@ fi
 # Enable 16bit support only for backends which support it
 #
 case $_backend in
-	dingux | dreamcast | gph | openpandora | psp | samsungtv | sdl | wii)
+	android | dingux | dreamcast | gph | openpandora | psp | samsungtv | sdl | wii)
 		if test "$_16bit" = auto ; then
 			_16bit=yes
 		else
@@ -2954,6 +2975,15 @@ fi
 #
 case $_backend in
 	android)
+		# ssp at this point so the cxxtests link
+		if test "$_debug_build" = yes; then
+			CXXFLAGS="$CXXFLAGS -fstack-protector"
+		else
+			CXXFLAGS="$CXXFLAGS -fno-stack-protector"
+		fi
+		CXXFLAGS="$CXXFLAGS -Wa,--noexecstack"
+		LDFLAGS="$LDFLAGS -Wl,-z,noexecstack"
+
 		static_libs=''
 		system_libs=''
 		for lib in $LIBS; do
@@ -2972,7 +3002,7 @@ case $_backend in
 		# than pick up anything unhygenic from the Android libs.
 		LIBS="-Wl,-Bstatic $static_libs"
 		LIBS="$LIBS -Wl,-Bdynamic -lgcc $system_libs -llog -lGLESv1_CM"
-		DEFINES="$DEFINES -D__ANDROID__ -DREDUCE_MEMORY_USAGE"
+		DEFINES="$DEFINES -DREDUCE_MEMORY_USAGE"
 		;;
 	dc)
 		INCLUDES="$INCLUDES "'-I$(srcdir)/backends/platform/dc -isystem $(ronindir)/include'
@@ -3038,8 +3068,8 @@ case $_backend in
 		DEFINES="$DEFINES -D_EE -DFORCE_RTL"
 		INCLUDES="$INCLUDES -I$PS2SDK/ee/include -I$PS2SDK/common/include -I$PS2SDK/ports/include"
 		if test "$_dynamic_modules" = no ; then
-  			LDFLAGS="$LDFLAGS -mno-crt0 $PS2SDK/ee/startup/crt0.o -T $PS2SDK/ee/startup/linkfile"
- 		fi
+			LDFLAGS="$LDFLAGS -mno-crt0 $PS2SDK/ee/startup/crt0.o -T $PS2SDK/ee/startup/linkfile"
+		fi
 		LDFLAGS="$LDFLAGS -L$PS2SDK/ee/lib -L$PS2SDK/ports/lib"
 		LIBS="$LIBS -lmc -lpad -lmouse -lhdd -lpoweroff -lsjpcm -lm -lc -lfileXio -lkernel -lstdc++ "
 		;;
@@ -3092,7 +3122,7 @@ if test "$have_gcc" = yes ; then
 		case $_host_os in
 		# newlib-based system include files suppress non-C89 function
 		# declarations under __STRICT_ANSI__
-		amigaos* | android | dreamcast | ds | gamecube | mingw* | n64 | psp | wii | wince )
+		amigaos* | android | dreamcast | ds | gamecube | mingw* | n64 | psp | ps2 | wii | wince )
 			CXXFLAGS="$CXXFLAGS -W -Wno-unused-parameter"
 			;;
 		*)

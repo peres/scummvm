@@ -121,11 +121,10 @@ void GfxPaint16::drawCel(GfxView *view, int16 loopNo, int16 celNo, const Common:
 
 	Common::Rect clipRectTranslated = clipRect;
 	_ports->offsetRect(clipRectTranslated);
-	if (scaleX == 128 && scaleY == 128) {
+	if (scaleX == 128 && scaleY == 128)
 		view->draw(celRect, clipRect, clipRectTranslated, loopNo, celNo, priority, paletteNo, false);
-	} else {
+	else
 		view->drawScaled(celRect, clipRect, clipRectTranslated, loopNo, celNo, priority, scaleX, scaleY);
-	}
 }
 
 // This is used as replacement for drawCelAndShow() when hires-cels are drawn to
@@ -160,8 +159,8 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 		// adjust curPort to upscaled hires
 		clipRect = celRect;
 		curPortRect = _ports->_curPort->rect;
-		_screen->adjustToUpscaledCoordinates(curPortRect.top, curPortRect.left);
-		_screen->adjustToUpscaledCoordinates(curPortRect.bottom, curPortRect.right);
+		view->adjustToUpscaledCoordinates(curPortRect.top, curPortRect.left);
+		view->adjustToUpscaledCoordinates(curPortRect.bottom, curPortRect.right);
 		curPortRect.bottom++;
 		curPortRect.right++;
 		clipRect.clip(curPortRect);
@@ -171,7 +170,7 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 		clipRectTranslated = clipRect;
 		if (!upscaledHiresHack) {
 			curPortPos.x = _ports->_curPort->left; curPortPos.y = _ports->_curPort->top;
-			_screen->adjustToUpscaledCoordinates(curPortPos.y, curPortPos.x);
+			view->adjustToUpscaledCoordinates(curPortPos.y, curPortPos.x);
 			clipRectTranslated.top += curPortPos.y; clipRectTranslated.bottom += curPortPos.y;
 			clipRectTranslated.left += curPortPos.x; clipRectTranslated.right += curPortPos.x;
 		}
@@ -278,9 +277,8 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 }
 
 void GfxPaint16::frameRect(const Common::Rect &rect) {
-	Common::Rect r;
+	Common::Rect r = rect;
 	// left
-	r = rect;
 	r.right = rect.left + 1;
 	paintRect(r);
 	// right
@@ -362,7 +360,7 @@ void GfxPaint16::bitsRestore(reg_t memoryHandle) {
 
 		if (memoryPtr) {
 			_screen->bitsRestore(memoryPtr);
-			_segMan->freeHunkEntry(memoryHandle);
+			bitsFree(memoryHandle);
 		}
 	}
 }
@@ -534,20 +532,7 @@ reg_t GfxPaint16::kernelDisplay(const char *text, int argc, reg_t *argv) {
 		case SCI_DISPLAY_RESTOREUNDER:
 			bitsGetRect(argv[0], &rect);
 			rect.translate(-_ports->getPort()->left, -_ports->getPort()->top);
-			if (g_sci->getGameId() == GID_PQ3 && g_sci->getEngineState()->currentRoomNumber() == 29) {
-				// WORKAROUND: PQ3 calls this without calling the associated
-				// kDisplay(SCI_DISPLAY_SAVEUNDER) call before. Theoretically,
-				// this would result in no rect getting restored. However, we
-				// still maintain a pointer from the previous room, resulting
-				// in invalidated content being restored on screen, and causing
-				// graphics glitches. Thus, we simply don't restore a rect in
-				// that room. The correct fix for this would be to erase hunk
-				// pointers when changing rooms, but this will suffice for now,
-				// as restoring from a totally invalid pointer is very rare.
-				// Fixes bug #3037945.
-			} else {
-				bitsRestore(argv[0]);
-			}
+			bitsRestore(argv[0]);
 			kernelGraphRedrawBox(rect);
 			// finishing loop
 			argc = 0;
@@ -583,7 +568,10 @@ reg_t GfxPaint16::kernelDisplay(const char *text, int argc, reg_t *argv) {
 	// now drawing the text
 	_text16->Size(rect, text, -1, width);
 	rect.moveTo(_ports->getPort()->curLeft, _ports->getPort()->curTop);
-	if (getSciVersion() >= SCI_VERSION_1_LATE) {
+	// Note: This code has been found in SCI1 middle and newer games. It was
+	// previously only for SCI1 late and newer, but the LSL1 interpreter contains
+	// this code.
+	if (getSciVersion() >= SCI_VERSION_1_MIDDLE) {
 		int16 leftPos = rect.right <= _screen->getWidth() ? 0 : _screen->getWidth() - rect.right;
 		int16 topPos = rect.bottom <= _screen->getHeight() ? 0 : _screen->getHeight() - rect.bottom;
 		_ports->move(leftPos, topPos);

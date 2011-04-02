@@ -6,6 +6,7 @@ ANDROID_PLUGIN_VERSIONCODE = 6
 
 JAVA_FILES = \
 	ScummVM.java \
+	ScummVMEvents.java \
 	ScummVMApplication.java \
 	ScummVMActivity.java \
 	EditableSurfaceView.java \
@@ -20,6 +21,8 @@ JAVA_FILES_GEN = \
 
 PATH_DIST = $(srcdir)/dists/android
 PATH_RESOURCES = $(PATH_DIST)/res
+
+PORT_DISTFILES = $(PATH_DIST)/README.Android
 
 RESOURCES = \
 	$(PATH_RESOURCES)/values/strings.xml \
@@ -163,6 +166,10 @@ release/%.apk: %.apk
 
 androidrelease: $(addprefix release/, $(APK_MAIN) $(APK_PLUGINS))
 
+androidtestmain: $(APK_MAIN)
+	$(ADB) install -r $(APK_MAIN)
+	$(ADB) shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n org.inodes.gus.scummvm/.Unpacker
+
 androidtest: $(APK_MAIN) $(APK_PLUGINS)
 	@set -e; for apk in $^; do \
 		$(ADB) install -r $$apk; \
@@ -173,7 +180,7 @@ androidtest: $(APK_MAIN) $(APK_PLUGINS)
 androiddistdebug: all
 	$(MKDIR) debug
 	$(CP) $(APK_MAIN) $(APK_PLUGINS) debug/
-	for i in $(DIST_FILES_DOCS); do \
+	for i in $(DIST_FILES_DOCS) $(PORT_DISTFILES); do \
 		sed 's/$$/\r/' < $$i > debug/`basename $$i`.txt; \
 	done
 

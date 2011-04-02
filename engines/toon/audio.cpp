@@ -48,7 +48,7 @@ AudioManager::AudioManager(ToonEngine *vm, Audio::Mixer *mixer) : _vm(vm), _mixe
 	for (int32 i = 0; i < 16; i++)
 		_channels[i] = NULL;
 
-	for (int32 i = 0; i < 4; i++) 
+	for (int32 i = 0; i < 4; i++)
 		_audioPacks[i] = NULL;
 
 	for (int32 i = 0; i < 4; i++) {
@@ -63,6 +63,8 @@ AudioManager::AudioManager(ToonEngine *vm, Audio::Mixer *mixer) : _vm(vm), _mixe
 	_voiceMuted = false;
 	_musicMuted = false;
 	_sfxMuted = false;
+
+	_currentMusicChannel = 0;
 }
 
 AudioManager::~AudioManager(void) {
@@ -113,24 +115,23 @@ void AudioManager::playMusic(Common::String dir, Common::String music) {
 		return;
 
 	// see what channel to take
-	if (_channels[0] && _channels[0]->isPlaying() && _channels[1] && _channels[1]->isPlaying()) {
-		// take the one that is fading
-		if (_channels[0]->isFading()) {
-			_channels[0]->stop(false);
-			_channels[1]->stop(true);
-			_currentMusicChannel = 0;
-		} else {
-			_channels[1]->stop(false);
-			_channels[0]->stop(true);
-			_currentMusicChannel = 1;
+	// if the current channel didn't really start. reuse this one
+	if (_channels[_currentMusicChannel] && _channels[_currentMusicChannel]->isPlaying()) {
+		if (_channels[_currentMusicChannel]->getPlayedSampleCount() < 500) {
+			_channels[_currentMusicChannel]->stop(false);
+			_currentMusicChannel = 1 - _currentMusicChannel;
 		}
-	} else if (_channels[0] && _channels[0]->isPlaying()) {
-		_channels[0]->stop(true);
-		_currentMusicChannel = 1;
-	} else {
-		if (_channels[1] && _channels[1]->isPlaying())
-			_channels[1]->stop(true);
-		_currentMusicChannel = 0;
+		else
+		{
+			_channels[_currentMusicChannel]->stop(true);
+		}
+	}
+	// go to the next channel
+	_currentMusicChannel = 1 - _currentMusicChannel;
+
+	// if it's already playing.. stop it quickly (no fade)
+	if (_channels[_currentMusicChannel] && _channels[_currentMusicChannel]->isPlaying()) {
+		_channels[_currentMusicChannel]->stop(false);
 	}
 
 	// no need to delete instance here it will automatically deleted by the mixer is done with it
@@ -208,7 +209,6 @@ void AudioManager::stopCurrentVoice() {
 		_channels[2]->stop(false);
 }
 
-
 void AudioManager::closeAudioPack(int32 id) {
 	delete _audioPacks[id];
 	_audioPacks[id] = NULL;
@@ -261,6 +261,7 @@ AudioStreamInstance::AudioStreamInstance(AudioManager *man, Audio::Mixer *mixer,
 	_looping = looping;
 	_musicAttenuation = 1000;
 	_deleteFileStream = deleteFileStreamAtEnd;
+	_playedSamples = 0;
 
 	// preload one packet
 	if (_totalSize > 0) {
@@ -286,7 +287,7 @@ AudioStreamInstance::~AudioStreamInstance() {
 int AudioStreamInstance::readBuffer(int16 *buffer, const int numSamples) {
 	debugC(5, kDebugAudio, "readBuffer(buffer, %d)", numSamples);
 
-	if(_stopped) 
+	if(_stopped)
 		return 0;
 
 	handleFade(numSamples);
@@ -308,6 +309,8 @@ int AudioStreamInstance::readBuffer(int16 *buffer, const int numSamples) {
 		memcpy(buffer + destOffset, &_buffer[_bufferOffset], MIN(leftSamples * 2, _bufferSize));
 		_bufferOffset += leftSamples;
 	}
+
+	_playedSamples += numSamples;
 
 	return numSamples;
 }
@@ -423,7 +426,7 @@ void AudioStreamInstance::handleFade(int32 numSamples) {
 	debugC(5, kDebugAudio, "handleFade(%d)", numSamples);
 
 	// Fading enabled only for music
-	if (_soundType != Audio::Mixer::kMusicSoundType) 
+	if (_soundType != Audio::Mixer::kMusicSoundType)
 		return;
 
 	int32 finalVolume = _volume;
@@ -457,7 +460,7 @@ void AudioStreamInstance::handleFade(int32 numSamples) {
 			_musicAttenuation = 250;
 	} else {
 		_musicAttenuation += numSamples >> 5;
-		if (_musicAttenuation > 1000) 
+		if (_musicAttenuation > 1000)
 			_musicAttenuation = 1000;
 	}
 
@@ -468,9 +471,11 @@ void AudioStreamInstance::stop(bool fade /*= false*/) {
 	debugC(1, kDebugAudio, "stop(%d)", (fade) ? 1 : 0);
 
 	if (fade) {
-		_fadingIn = false;
-		_fadingOut = true;
-		_fadeTime = 0;
+		if (!_fadingOut) {
+			_fadingIn = false;
+			_fadingOut = true;
+			_fadeTime = 0;
+		}
 	} else {
 		stopNow();
 	}
@@ -551,7 +556,7 @@ void AudioManager::startAmbientSFX(int32 id, int32 delay, int32 mode, int32 volu
 		}
 	}
 
-	if (found < 0) 
+	if (found < 0)
 		return;
 
 	_ambientSFXs[found]._lastTimer = _vm->getOldMilli() - 1;
@@ -610,13 +615,14 @@ void AudioManager::killAllAmbientSFX()
 
 void AudioManager::updateAmbientSFX()
 {
-	if (_vm->getMoviePlayer()->isPlaying()) return;
+	if (_vm->getMoviePlayer()->isPlaying())
+		return;
 
 	for (int32 i = 0; i < 4; i++) {
 		AudioAmbientSFX* ambient = &_ambientSFXs[i];
 		if (ambient->_enabled && (ambient->_channel < 0 || !(_channels[ambient->_channel] && _channels[ambient->_channel]->isPlaying()))) {
 			if(ambient->_mode == 1) {
-				if (_vm->randRange(0, 32767) < ambient->_delay) {					
+				if (_vm->randRange(0, 32767) < ambient->_delay) {
 					ambient->_channel = playSFX(ambient->_id, ambient->_volume, false);
 				}
 			} else {
@@ -628,7 +634,6 @@ void AudioManager::updateAmbientSFX()
 		}
 	}
 }
-
 
 } // End of namespace Toon
 

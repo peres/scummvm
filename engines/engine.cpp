@@ -145,7 +145,11 @@ void initCommonGFX(bool defaultTo1XScaler) {
 	assert(transientDomain);
 
 	const bool useDefaultGraphicsMode =
-		!transientDomain->contains("gfx_mode") &&
+		(!transientDomain->contains("gfx_mode") ||
+		!scumm_stricmp(transientDomain->getVal("gfx_mode").c_str(), "normal") ||
+		!scumm_stricmp(transientDomain->getVal("gfx_mode").c_str(), "default")
+		)
+		 &&
 		(
 		!gameDomain ||
 		!gameDomain->contains("gfx_mode") ||
@@ -155,10 +159,7 @@ void initCommonGFX(bool defaultTo1XScaler) {
 
 	// See if the game should default to 1x scaler
 	if (useDefaultGraphicsMode && defaultTo1XScaler) {
-		// FIXME: As a hack, we use "1x" here. Would be nicer to use
-		// getDefaultGraphicsMode() instead, but right now, we do not specify
-		// whether that is a 1x scaler or not...
-		g_system->setGraphicsMode("1x");
+		g_system->resetGraphicsScale();
 	} else {
 		// Override global scaler with any game-specific define
 		if (ConfMan.hasKey("gfx_mode")) {
@@ -280,7 +281,7 @@ void initGraphics(int width, int height, bool defaultTo1xScaler) {
 	initGraphics(width, height, defaultTo1xScaler, &format);
 }
 
-void GUIErrorMessage(const Common::String msg) {
+void GUIErrorMessage(const Common::String &msg) {
 	g_system->setWindowCaption("Error");
 	g_system->beginGFXTransaction();
 		initCommonGFX(false);
@@ -429,7 +430,6 @@ int Engine::runDialog(GUI::Dialog &dialog) {
 }
 
 void Engine::syncSoundSettings() {
-
 	// Sync the engine with the config manager
 	int soundVolumeMusic = ConfMan.getInt("music_volume");
 	int soundVolumeSFX = ConfMan.getInt("sfx_volume");
@@ -439,6 +439,7 @@ void Engine::syncSoundSettings() {
 	if (ConfMan.hasKey("mute"))
 		mute = ConfMan.getBool("mute");
 
+	_mixer->setVolumeForSoundType(Audio::Mixer::kPlainSoundType, (mute ? 0 : Audio::Mixer::kMaxMixerVolume));
 	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, (mute ? 0 : soundVolumeMusic));
 	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, (mute ? 0 : soundVolumeSFX));
 	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, (mute ? 0 : soundVolumeSpeech));

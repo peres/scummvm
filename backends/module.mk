@@ -8,10 +8,13 @@ MODULE_OBJS := \
 	events/default/default-events.o \
 	events/dinguxsdl/dinguxsdl-events.o \
 	events/gp2xsdl/gp2xsdl-events.o \
+	events/gph/gph-events.o \
 	events/linuxmotosdl/linuxmotosdl-events.o \
+	events/openpandora/op-events.o \
 	events/samsungtvsdl/samsungtvsdl-events.o \
 	events/sdl/sdl-events.o \
 	events/symbiansdl/symbiansdl-events.o \
+	events/wincesdl/wincesdl-events.o \
 	fs/abstract-fs.o \
 	fs/stdiostream.o \
 	fs/amigaos4/amigaos4-fs-factory.o \
@@ -20,13 +23,16 @@ MODULE_OBJS := \
 	fs/windows/windows-fs-factory.o \
 	graphics/dinguxsdl/dinguxsdl-graphics.o \
 	graphics/gp2xsdl/gp2xsdl-graphics.o \
+	graphics/gph/gph-graphics.o \
 	graphics/linuxmotosdl/linuxmotosdl-graphics.o \
 	graphics/opengl/glerrorcheck.o \
 	graphics/opengl/gltexture.o \
 	graphics/opengl/opengl-graphics.o \
 	graphics/openglsdl/openglsdl-graphics.o \
+	graphics/openpandora/op-graphics.o \
 	graphics/sdl/sdl-graphics.o \
 	graphics/symbiansdl/symbiansdl-graphics.o \
+	graphics/wincesdl/wincesdl-graphics.o \
 	keymapper/action.o \
 	keymapper/keymap.o \
 	keymapper/keymapper.o \
@@ -44,6 +50,7 @@ MODULE_OBJS := \
 	mixer/doublebuffersdl/doublebuffersdl-mixer.o \
 	mixer/sdl/sdl-mixer.o \
 	mixer/symbiansdl/symbiansdl-mixer.o \
+	mixer/wincesdl/wincesdl-mixer.o \
 	mutex/sdl/sdl-mutex.o \
 	plugins/elf/elf-loader.o \
 	plugins/elf/mips-loader.o \

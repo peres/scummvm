@@ -113,7 +113,7 @@ reg_t kStrAt(EngineState *s, int argc, reg_t *argv) {
 		reg_t &tmp = dest_r.reg[offset / 2];
 
 		bool oddOffset = offset & 1;
-		if (g_sci->getPlatform() == Common::kPlatformAmiga)
+		if (g_sci->isBE())
 			oddOffset = !oddOffset;
 
 		if (!oddOffset) {
@@ -159,17 +159,9 @@ reg_t kReadNumber(EngineState *s, int argc, reg_t *argv) {
 			source++;
 		}
 		while (*source) {
-			if ((*source < '0') || (*source > '9')) {
-				// Sierra's atoi stopped processing at anything which is not
-				// a digit. Sometimes the input has a trailing space, that's
-				// fine (example: lsl3)
-				if (*source != ' ') {
-					// TODO: this happens in lsl5 right in the intro -> we get '1' '3' 0xCD 0xCD 0xCD 0xCD 0xCD
-					//       find out why this happens and fix it
-					warning("Invalid character in kReadNumber input");
-				}
+			if ((*source < '0') || (*source > '9'))
+				// Stop if we encounter anything other than a digit (like atoi)
 				break;
-			}
 			result *= 10;
 			result += *source - 0x30;
 			source++;
@@ -198,7 +190,6 @@ reg_t kFormat(EngineState *s, int argc, reg_t *argv) {
 	char targetbuf[4096];
 	char *target = targetbuf;
 	reg_t position = argv[1]; /* source */
-	int index = argv[2].toUint16();
 	int mode = 0;
 	int paramindex = 0; /* Next parameter to evaluate */
 	char xfer;
@@ -209,9 +200,16 @@ reg_t kFormat(EngineState *s, int argc, reg_t *argv) {
 
 	if (position.segment)
 		startarg = 2;
-	else
-		startarg = 3; /* First parameter to use for formatting */
+	else {
+		// WORKAROUND: QFG1 VGA Mac calls this without the first parameter (dest). It then
+		// treats the source as the dest and overwrites the source string with an empty string.
+		if (argc < 3)
+			return NULL_REG;
 
+		startarg = 3; /* First parameter to use for formatting */
+	}
+
+	int index = (startarg == 3) ? argv[2].toUint16() : 0;
 	Common::String source_str = g_sci->getKernel()->lookupText(position, index);
 	const char* source = source_str.c_str();
 

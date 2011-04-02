@@ -1193,7 +1193,7 @@ void ThemeEngine::debugWidgetPosition(const char *name, const Common::Rect &r) {
 /**********************************************************
  *	Screen/overlay management
  *********************************************************/
-void ThemeEngine::updateScreen() {
+void ThemeEngine::updateScreen(bool render) {
 	if (!_bufferQueue.empty()) {
 		_vectorRenderer->setSurface(&_backBuffer);
 
@@ -1218,7 +1218,8 @@ void ThemeEngine::updateScreen() {
 		_screenQueue.clear();
 	}
 
-	renderDirtyScreen();
+	if (render)
+		renderDirtyScreen();
 }
 
 void ThemeEngine::addDirtyRect(Common::Rect r) {

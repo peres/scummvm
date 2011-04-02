@@ -640,8 +640,10 @@ begin_credits("Credits");
 	  end_section();
 
 	  begin_section("Mohawk");
+		  add_person("Bastien Bouclet", "bgk", "");
 		  add_person("Matthew Hoops", "clone2727", "");
 		  add_person("Filippos Karapetis", "[md5]", "");
+		  add_person("Alyssa Milburn", "fuzzie", "");
 		  add_person("Eugene Sandulenko", "sev", "");
 		  add_person("David Turner", "digitall", "");
 	  end_section();
@@ -702,6 +704,7 @@ begin_credits("Credits");
 
     begin_section("Backend Teams");
 	  begin_section("Android");
+		  add_person("Andre Heider", "dhewg", "");
 		  add_person("Angus Lees", "Gus", "");
 	  end_section();
 
@@ -783,7 +786,7 @@ begin_credits("Credits");
 
 	  begin_section("Miscellaneous");
 		add_person("David Corrales-Lopez", "david_corrales", "Filesystem access improvements (GSoC 2007 task) (retired)");
-		add_person("Jerome Fisher", "KingGuppy", "MT-32 emulator (retired)");
+		add_person("Jerome Fisher", "KingGuppy", "MT-32 emulator");
 		add_person("Benjamin Haisch", "john_doe", "Heavily improved de-/encoder for DXA videos");
 		add_person("Jochen Hoenicke", "hoenicke", "Speaker &amp; PCjr sound support, AdLib work (retired)");
 		add_person("Chris Page", "cp88", "Return to launcher, savestate improvements, leak fixes, ... (GSoC 2008 task) (retired)");
@@ -794,6 +797,19 @@ begin_credits("Credits");
     begin_section("Website (code)");
 	  begin_persons();
 		add_person("Fredrik Wendel", "", "(retired)");
+	  end_persons();
+    end_section();
+    
+    begin_section("Website (maintenance)");
+	  begin_persons();
+	    add_person("James Brown", "Ender", "IRC Logs maintainer");
+		add_person("Thierry Crozat", "criezy", "Wiki maintainer");
+		add_person("Andre Heider", "dhewg", "Buildbot maintainer");
+		add_person("Max Horn", "Fingolfin", "Forum, IRC channel and Mailing list maintainer");
+		add_person("Joost Peters", "JoostP", "Doxygen Project Documentation maintainer");
+		add_person("Jordi Vilalta Prat", "jvprat", "Wiki maintainer");
+		add_person("Eugene Sandulenko", "sev", "Forum, IRC channel, Screen Shots and Mailing list maintainer");
+		add_person("John Willis", "DJWillis", "");
 	  end_persons();
     end_section();
 
@@ -937,6 +953,9 @@ begin_credits("Credits");
 		begin_section("Spanish");
 			add_person("Tom&aacute;s Maidagan", "Truido", "");
 		end_section();
+		begin_section("Swedish");
+			add_person("Hampus Flink", "", "");
+		end_section();
 		begin_section("Ukrainian");
 			add_person("Lubomyr Lisen", "", "");
 		end_section();
@@ -949,6 +968,7 @@ begin_credits("Credits");
 		  add_person("David Jensen", "Tyst", "SVG logo conversion");
 		  add_person("Jean Marc Gimenez", "", "ScummVM logo");
 		  add_person("", "Raina", "ScummVM forum buttons");
+		  add_person("William Claydon", "billwashere", "Skins for doxygen and wiki");
 	  end_persons();
 	end_section();
 
@@ -958,7 +978,7 @@ begin_credits("Credits");
 		  add_person("Stuart Caie", "", "Decoders for Amiga and AtariST data files (AGOS engine)");
 		  add_person("Paolo Costabel", "", "PSP port contributions");
 		  add_person("Martin Doucha", "next_ghost", "CinE engine objectification");
-		  add_person("Thomas Fach-Pedersen", "madmoose", "ProTracker module player");
+		  add_person("Thomas Fach-Pedersen", "madmoose", "ProTracker module player, Smacker video decoder");
 		  add_person("Tobias Gunkel", "hennymcc", "Sound support for C64 version of MM/Zak, Loom PCE support");
 		  add_person("Janne Huttunen", "", "V3 actor mask support, Dig/FT SMUSH audio");
 		  add_person("Kov&aacute;cs Endre J&aacute;nos", "", "Several fixes for Simon1");
